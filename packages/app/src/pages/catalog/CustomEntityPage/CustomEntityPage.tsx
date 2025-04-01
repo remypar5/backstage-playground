@@ -11,10 +11,8 @@ import {
 import { EmptyState } from '@backstage/core-components';
 import {
   EntityApiDefinitionCard,
-  EntityConsumedApisCard,
   EntityConsumingComponentsCard,
   EntityHasApisCard,
-  EntityProvidedApisCard,
   EntityProvidingComponentsCard,
 } from '@backstage/plugin-api-docs';
 import {
@@ -49,13 +47,14 @@ import {
   EntityGroupProfileCard,
   EntityMembersListCard,
   EntityOwnershipCard,
-  EntityUserProfileCard,
 } from '@backstage/plugin-org';
 import { EntityTechdocsContent } from '@backstage/plugin-techdocs';
 import { ReportIssue } from '@backstage/plugin-techdocs-module-addons-contrib';
 import { TechDocsAddons } from '@backstage/plugin-techdocs-react';
 import { Button, Grid } from '@material-ui/core';
 import React from 'react';
+import { ServiceEntityPage } from './ServiceEntityPage';
+import { UserEntityPage } from './UserEntityPage';
 
 const techdocsContent = (
   <EntityTechdocsContent>
@@ -143,52 +142,6 @@ const overviewContent = (
   </Grid>
 );
 
-const serviceEntityPage = (
-  <EntityLayout>
-    <EntityLayout.Route path="/" title="Overview">
-      {overviewContent}
-    </EntityLayout.Route>
-
-    <EntityLayout.Route path="/ci-cd" title="CI/CD">
-      {cicdContent}
-    </EntityLayout.Route>
-
-    <EntityLayout.Route
-      path="/kubernetes"
-      title="Kubernetes"
-      if={isKubernetesAvailable}
-    >
-      <EntityKubernetesContent />
-    </EntityLayout.Route>
-
-    <EntityLayout.Route path="/api" title="API">
-      <Grid container spacing={3} alignItems="stretch">
-        <Grid item md={6}>
-          <EntityProvidedApisCard />
-        </Grid>
-        <Grid item md={6}>
-          <EntityConsumedApisCard />
-        </Grid>
-      </Grid>
-    </EntityLayout.Route>
-
-    <EntityLayout.Route path="/dependencies" title="Dependencies">
-      <Grid container spacing={3} alignItems="stretch">
-        <Grid item md={6}>
-          <EntityDependsOnComponentsCard variant="gridItem" />
-        </Grid>
-        <Grid item md={6}>
-          <EntityDependsOnResourcesCard variant="gridItem" />
-        </Grid>
-      </Grid>
-    </EntityLayout.Route>
-
-    <EntityLayout.Route path="/docs" title="Docs">
-      {techdocsContent}
-    </EntityLayout.Route>
-  </EntityLayout>
-);
-
 const websiteEntityPage = (
   <EntityLayout>
     <EntityLayout.Route path="/" title="Overview">
@@ -243,6 +196,14 @@ const defaultEntityPage = (
   </EntityLayout>
 );
 
+const serviceEntityPage = (
+  <ServiceEntityPage
+    overviewContent={overviewContent}
+    cicdContent={cicdContent}
+    techdocsContent={techdocsContent}
+  />
+);
+
 const componentPage = (
   <EntitySwitch>
     <EntitySwitch.Case if={isComponentType('service')}>
@@ -286,22 +247,6 @@ const apiPage = (
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <EntityApiDefinitionCard />
-        </Grid>
-      </Grid>
-    </EntityLayout.Route>
-  </EntityLayout>
-);
-
-const userPage = (
-  <EntityLayout>
-    <EntityLayout.Route path="/" title="Overview">
-      <Grid container spacing={3}>
-        {entityWarningContent}
-        <Grid item xs={12} md={6}>
-          <EntityUserProfileCard variant="gridItem" />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <EntityOwnershipCard variant="gridItem" />
         </Grid>
       </Grid>
     </EntityLayout.Route>
@@ -395,6 +340,8 @@ const domainPage = (
     </EntityLayout.Route>
   </EntityLayout>
 );
+
+const userPage = <UserEntityPage entityWarningContent={entityWarningContent} />;
 
 export const customEntityPage = (
   <EntitySwitch>

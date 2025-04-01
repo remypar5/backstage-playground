@@ -6732,6 +6732,14 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@internal/plugin-tags-common@workspace:^, @internal/plugin-tags-common@workspace:plugins/tags-common":
+  version: 0.0.0-use.local
+  resolution: "@internal/plugin-tags-common@workspace:plugins/tags-common"
+  dependencies:
+    "@backstage/cli": "npm:^0.31.0"
+  languageName: unknown
+  linkType: soft
+
 "@internationalized/date@npm:^3.7.0":
   version: 3.7.0
   resolution: "@internationalized/date@npm:3.7.0"
@@ -13830,6 +13838,7 @@ __metadata:
     "@backstage/plugin-user-settings": "npm:^0.8.20"
     "@backstage/test-utils": "npm:^1.7.6"
     "@backstage/theme": "npm:^0.6.4"
+    "@internal/plugin-tags-common": "workspace:^"
     "@material-ui/core": "npm:^4.12.2"
     "@material-ui/icons": "npm:^4.9.1"
     "@material-ui/lab": "npm:^4.0.0-alpha.61"

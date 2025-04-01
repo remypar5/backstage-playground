@@ -12,6 +12,7 @@ import {
   getEntityRelations,
   useEntity,
 } from '@backstage/plugin-catalog-react';
+import { getTagsByCategory } from '@internal/plugin-tags-common';
 import {
   Box,
   Chip,
@@ -21,11 +22,11 @@ import {
   ListItemIcon,
   ListItemText,
   Tooltip,
+  Typography,
 } from '@material-ui/core';
 import PersonIcon from '@material-ui/icons/Person';
 import Alert from '@material-ui/lab/Alert';
 import React from 'react';
-import { categorizeTags } from '../../../pages/catalog/CustomCatalogIndexPage/columns/utils';
 import { LinksGroup } from './LinksGroup';
 
 type UserProfileCardProps = {
@@ -63,7 +64,7 @@ export const UserProfileCard = ({
   }
 
   const {
-    metadata: { name: metaName, description, links, tags: metaTags },
+    metadata: { name: metaName, description, links, tags = [] },
     spec: { profile },
   } = user;
   const displayName = profile?.displayName || metaName;
@@ -72,7 +73,7 @@ export const UserProfileCard = ({
     kind: 'Group',
   });
 
-  const tags = categorizeTags(metaTags ?? []);
+  const skills = getTagsByCategory(tags, 'skill');
 
   return (
     <InfoCard
@@ -85,7 +86,7 @@ export const UserProfileCard = ({
           <Avatar displayName={displayName} picture={profile?.picture} />
         </Grid>
 
-        <Grid item md={10} xl={11}>
+        <Grid item md={10} xl={10}>
           <List>
             {profile?.email && (
               <ListItem>
@@ -118,15 +119,18 @@ export const UserProfileCard = ({
           </List>
         </Grid>
 
-        {tags.has('skill') && (
-          <Grid item xs={12}>
-            <Box display="flex" flexWrap="wrap" paddingTop={4}>
-              {tags.get('skill')?.map(tag => (
-                <Box mr={1} mb={1} key={tag}>
-                  <Chip label={tag} variant="outlined" size="small" />
-                </Box>
-              ))}
-            </Box>
+        {skills.length > 0 && (
+          <Grid item md={12} xl={1}>
+            <Typography variant="subtitle2" gutterBottom>
+              Tags
+            </Typography>
+            <Grid container spacing={1} alignItems="center">
+              <Box display="flex" flexWrap="wrap" paddingTop={4}>
+                {skills.map(tag => (
+                  <Chip key={tag} label={tag} variant="outlined" size="small" />
+                ))}
+              </Box>
+            </Grid>
           </Grid>
         )}
       </Grid>

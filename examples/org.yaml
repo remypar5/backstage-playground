@@ -3,15 +3,57 @@
 apiVersion: backstage.io/v1alpha1
 kind: User
 metadata:
-  name: guest
+  name: remy.parzinski
+  role: engineer
+  tags:
+    - skill:frontend
+    - skill:react
+    - skill:ideation
+    - location:hq
 spec:
-  memberOf: [guests]
+  memberOf: [beast]
+  profile:
+    displayName: Remy Parzinski
+    email: remy.parzinski@ah.nl
+    picture: https://avatars.githubusercontent.com/u/4688360?v=4
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: thomas.berghaus-dobber
+  role: engineering-manager
+  tags:
+    - skill:frontend
+    - skill:backstage
+    - long-time-friend
+    - location:hq
+spec:
+  memberOf: [beast]
+  profile:
+    displayName: Thomas Berghaus-Dobber
+    email: thomas.berghaus-dobber@ah.nl
+    picture: https://avatars.githubusercontent.com/u/158567039?v=4
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: catalin.dumitru
+  role: engineer
+  tags:
+    - skill:frontend
+    - skill:proper
+    - location:techhub
+spec:
+  memberOf: [beast]
+  profile:
+    displayName: Catalin Dumitru
+    email: catalin.dumitru@ah.nl
 ---
 # https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: guests
+  name: beast
 spec:
   type: team
   children: []

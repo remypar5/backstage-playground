@@ -1,0 +1,108 @@
+name: 'Backstage Upgrade'
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Backstage version to upgrade to'
+        required: true
+        default: 'next'
+        type: string
+
+jobs:
+  upgrade:
+    name: Upgrade Backstage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # Run Backstage version bump
+      - name: Upgrade Backstage to ${{ inputs.version }}
+        run: yarn backstage-cli version:bump --release ${{ inputs.version }}
+
+      # Fetch changelog content from Backstage docs
+      - name: Fetch changelog content
+        id: changelog
+        run: |
+          VERSION="${{ inputs.version }}"
+          CHANGELOG_URL="https://backstage.io/docs/releases/${VERSION}"
+          
+          # Fetch the changelog page
+          RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" "$CHANGELOG_URL")
+          HTTP_CODE=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          CONTENT=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            # Extract breaking changes (headings starting with "BREAKING:")
+            BREAKING_CHANGES=$(echo "$CONTENT" | grep -i '<h[1-6][^>]*>.*BREAKING:' | sed 's/<[^>]*>//g' || echo "")
+            
+            if [ -z "$BREAKING_CHANGES" ]; then
+              BREAKING_CHANGES="No breaking changes reported"
+            fi
+            
+            # Save breaking changes to output
+            echo "breaking_changes<<EOF" >> $GITHUB_OUTPUT
+            echo "$BREAKING_CHANGES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            echo "changelog_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "breaking_changes=No breaking changes reported" >> $GITHUB_OUTPUT
+            echo "changelog_available=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Create Pull Request
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: upgrade Backstage to ${{ inputs.version }}"
+          title: "chore: upgrade Backstage to ${{ inputs.version }}"
+          branch: "backstage-upgrade-${{ inputs.version }}"
+          delete-branch: true
+          body: |
+            ## Backstage Upgrade to ${{ inputs.version }}
+            
+            This PR upgrades Backstage to version `${{ inputs.version }}` using the Backstage CLI.
+            
+            ### 📖 Documentation & Changelog
+            - [Release documentation](https://backstage.io/docs/releases/${{ inputs.version }})
+            
+            ### ⚠️ Breaking Changes
+            ${{ steps.changelog.outputs.breaking_changes }}
+            
+            ### 🔄 Changes Made
+            - Updated Backstage packages to version `${{ inputs.version }}`
+            - Dependencies have been automatically updated by the Backstage CLI
+            
+            ### ✅ Next Steps
+            - [ ] Review the changes in this PR
+            - [ ] Test the application locally
+            - [ ] Check for any additional manual updates needed
+            - [ ] Verify that all plugins are compatible with the new version
+            
+            ---
+            *This PR was created automatically by the Backstage Upgrade workflow.*
+          labels: |
+            dependencies
+            backstage-upgrade
+            automated-pr

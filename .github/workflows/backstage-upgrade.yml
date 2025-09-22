@@ -37,10 +37,10 @@ jobs:
 
       # Fix install issue from next step
       - name: Create .yarnrc
-        run: touch .yarnrc
+        run: touch .yarnrc.yml
 
       - name: Allow lockfile override
-        run: echo "--install.force true"
+        run: echo "enableImmutableInstalls: false" > .yarnrc.yml
 
       # Run Backstage version bump
       - name: Upgrade Backstage to ${{ inputs.version }}

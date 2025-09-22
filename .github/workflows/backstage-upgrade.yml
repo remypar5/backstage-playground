@@ -63,6 +63,24 @@ jobs:
           echo "status=success" >> $GITHUB_OUTPUT
           echo "packages=$(git diff --name-only | grep package.json | wc -l)" >> $GITHUB_OUTPUT
 
+      - name: Generate upgrade summary
+        run: |
+          echo "## 🚀 Backstage Upgrade Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Version Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Version**: \`${{ inputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Upgrade Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Packages Updated**: ${{ steps.upgrade-result.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Modified Files" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only >> $GITHUB_STEP_SUMMARY || echo "No changes detected" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Changelog will be fetched in parallel job" >> $GITHUB_STEP_SUMMARY
+          echo "- Pull request will be created automatically" >> $GITHUB_STEP_SUMMARY
+
       # Upload changes as artifact for the PR job
       - name: Upload upgrade changes
         uses: actions/upload-artifact@v4
@@ -117,6 +135,20 @@ jobs:
             echo "changelog_available=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Generate changelog summary
+        run: |
+          echo "## 📖 Changelog Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changelog Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: \`${{ inputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changelog Available**: ${{ steps.changelog.outputs.changelog_available == 'true' && '✅ Yes' || '❌ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Documentation URL**: [Backstage v${{ inputs.version }} Release](https://backstage.io/docs/releases/v${{ inputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Breaking Changes" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.changelog.outputs.breaking_changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
   # Final job: Create PR (depends on all previous jobs)
   create-pull-request:
     name: Create Pull Request
@@ -147,6 +179,7 @@ jobs:
           commit-message: 'chore: upgrade Backstage to v${{ inputs.version }}'
           title: 'chore: upgrade Backstage to v${{ inputs.version }}'
           branch: 'backstage/upgrade-to-${{ inputs.version }}'
+          draft: true
           delete-branch: true
           body: |
             ## Backstage Upgrade to ${{ inputs.version }}
@@ -180,3 +213,20 @@ jobs:
             dependencies
             backstage-upgrade
             automated-pr
+
+      - name: Generate PR creation summary
+        run: |
+          echo "## 📝 Pull Request Creation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### PR Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Title**: chore: upgrade Backstage to v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: backstage/upgrade-to-${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Labels**: dependencies, backstage-upgrade, automated-pr" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Included Data" >> $GITHUB_STEP_SUMMARY
+          echo "- **Upgrade Status**: ${{ needs.upgrade.outputs.upgrade-status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Packages Updated**: ${{ needs.upgrade.outputs.packages-updated }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changelog Available**: ${{ needs.fetch-changelog.outputs.changelog-available }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎉 Workflow Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "Your Backstage upgrade PR has been created and is ready for review." >> $GITHUB_STEP_SUMMARY

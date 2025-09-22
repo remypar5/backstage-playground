@@ -48,7 +48,7 @@ jobs:
 
       - name: Remove .yarnrc
         if: always()
-        run: rm .yarnrc
+        run: rm .yarnrc.yml
 
       # Fetch changelog content from Backstage docs
       - name: Fetch changelog content

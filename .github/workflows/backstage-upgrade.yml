@@ -36,19 +36,20 @@ jobs:
         run: yarn install
 
       # Fix install issue from next step
-      - name: Create .yarnrc
-        run: touch .yarnrc.yml
+      - name: Backup .yarnrc
+        run: cp .yarnrc.yml .yarnrc.yml__
 
       - name: Allow lockfile override
-        run: echo "enableImmutableInstalls: false" > .yarnrc.yml
+        run: |
+          echo "enableImmutableInstalls: false" >> .yarnrc.yml
 
       # Run Backstage version bump
       - name: Upgrade Backstage to ${{ inputs.version }}
         run: yarn backstage-cli versions:bump --release ${{ inputs.version }}
 
-      - name: Remove .yarnrc
+      - name: Restore .yarnrc.yml
         if: always()
-        run: rm .yarnrc.yml
+        run: mv -f .yarnrc.yml__ .yarnrc.yml
 
       # Fetch changelog content from Backstage docs
       - name: Fetch changelog content

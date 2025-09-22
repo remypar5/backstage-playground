@@ -10,12 +10,15 @@ on:
         type: string
 
 jobs:
+  # Job 1: Backstage upgrade
   upgrade:
     name: Upgrade Backstage
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
+    outputs:
+      upgrade-status: ${{ steps.upgrade-result.outputs.status }}
+      packages-updated: ${{ steps.upgrade-result.outputs.packages }}
 
     steps:
       # Checkout the repository
@@ -54,6 +57,35 @@ jobs:
         if: always()
         run: mv -f .yarnrc.yml__ .yarnrc.yml
 
+      - name: Set upgrade results
+        id: upgrade-result
+        run: |
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "packages=$(git diff --name-only | grep package.json | wc -l)" >> $GITHUB_OUTPUT
+
+      # Upload changes as artifact for the PR job
+      - name: Upload upgrade changes
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-changes
+          path: |
+            backstage.json
+            package.json
+            packages/*/package.json
+            yarn.lock
+
+  # Job 2: Fetch changelog (runs in parallel)
+  fetch-changelog:
+    name: Fetch Changelog
+    runs-on: ubuntu-latest
+    outputs:
+      breaking-changes: ${{ steps.changelog.outputs.breaking_changes }}
+      changelog-available: ${{ steps.changelog.outputs.changelog_available }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       # Fetch changelog content from Backstage docs
       - name: Fetch changelog content
         id: changelog
@@ -85,6 +117,28 @@ jobs:
             echo "changelog_available=false" >> $GITHUB_OUTPUT
           fi
 
+  # Final job: Create PR (depends on all previous jobs)
+  create-pull-request:
+    name: Create Pull Request
+    runs-on: ubuntu-latest
+    # This job waits for ALL the jobs listed in 'needs' to complete
+    needs: [upgrade, fetch-changelog]
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Download upgrade artifacts
+      - name: Download upgrade changes
+        uses: actions/download-artifact@v4
+        with:
+          name: upgrade-changes
+
       # Create Pull Request
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -99,11 +153,16 @@ jobs:
 
             This PR upgrades Backstage to version `${{ inputs.version }}` using the Backstage CLI.
 
+            ### 📊 Upgrade Summary
+            - **Status**: ${{ needs.upgrade.outputs.upgrade-status }}
+            - **Packages Updated**: ${{ needs.upgrade.outputs.packages-updated }}
+            - **Changelog Available**: ${{ needs.fetch-changelog.outputs.changelog-available }}
+
             ### 📖 Documentation & Changelog
             - [Release documentation](https://backstage.io/docs/releases/${{ inputs.version }})
 
             ### ⚠️ Breaking Changes
-            ${{ steps.changelog.outputs.breaking_changes }}
+            ${{ needs.fetch-changelog.outputs.breaking-changes }}
 
             ### 🔄 Changes Made
             - Updated Backstage packages to version `${{ inputs.version }}`

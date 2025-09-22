@@ -43,6 +43,9 @@ jobs:
         run: |
           echo "enableImmutableInstalls: false" >> .yarnrc.yml
 
+      - name: DEBUGGING OUTPUT
+        run: cat .yarnrc.yml
+
       # Run Backstage version bump
       - name: Upgrade Backstage to ${{ inputs.version }}
         run: yarn backstage-cli versions:bump --release ${{ inputs.version }}

@@ -40,7 +40,7 @@ jobs:
         run: touch .yarnrc
 
       - name: Allow lockfile override
-        run: echo "--install.no-default-rc true" >> .yarnrc
+        run: echo "--install.force true"
 
       # Run Backstage version bump
       - name: Upgrade Backstage to ${{ inputs.version }}

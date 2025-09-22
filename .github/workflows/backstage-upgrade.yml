@@ -35,9 +35,19 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      # Fix install issue from next step
+      - name: Backup and remove lockfile
+        run: mv yarn.lock yarn.lock__
+
       # Run Backstage version bump
       - name: Upgrade Backstage to ${{ inputs.version }}
         run: yarn backstage-cli versions:bump --release ${{ inputs.version }}
+
+      - name: Restore lockfile
+        run: mv -n yarn.lock__ yarn.lock
+
+      - name: Remove backup
+        run: rm yarn.lock__
 
       # Fetch changelog content from Backstage docs
       - name: Fetch changelog content
